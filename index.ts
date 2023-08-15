@@ -4,6 +4,10 @@ import { Payload } from './types.ts'
 import { tweet } from './twitter.ts'
 import { marclipify } from './marclip.ts'
 
+const timelog = (text: string) => {
+    console.log(`${new Date().toLocaleString('ja-JP', { timeZone: 'JST' })}: ${text}`)
+}
+
 const env = await load()
 const [secret, authToken, ct0] = [
     'MISSKEY_WEBHOOK_SECRET',
@@ -11,20 +15,21 @@ const [secret, authToken, ct0] = [
     'TWITTER_CT0'
 ].map(key => Deno.env.get(key) ?? env[key] ?? '')
 
-console.log({ secret, authToken, ct0 })
-
 const app = new Hono()
 
 app.post('/', async c => {
     const requestSecret: string = c.req.header('X-Misskey-Hook-Secret') ?? ''
     if (requestSecret !== secret) {
-        return c.text('403 Forbidden (Incorrect Secret)', 403)
+        const msg = '403 Forbidden (Incorrect Secret)'
+        timelog(msg)
+        return c.text(msg, 403)
     }
     const payload: Payload = await c.req.json()
-    console.log(payload)
     const { text, cw, visibility, localOnly, files } = payload.body.note
     if (!['public', 'home'].includes(visibility) || localOnly) {
-        return c.text(`403 Forbidden (Post visibility: ${localOnly ? 'local only' : visibility})`)
+        const msg = `403 Forbidden (Post visibility: ${localOnly ? 'local only' : visibility})`
+        timelog(msg)
+        return c.text(msg, 403)
     }
     const filesStr: string = (files ?? []).reduce((p, c, i) => {
         return p + `\n${(() => {
@@ -39,15 +44,22 @@ app.post('/', async c => {
     }, '')
     const tweetContent = ((text ?? '') + filesStr).replaceAll('\n', '  \n')
     if (!tweetContent) {
-        return c.text('403 Forbidden (Empty text)', 403)
+        const msg = '403 Forbidden (Empty content)'
+        timelog(msg)
+        return c.text(msg, 403)
     }
-    console.log(marclipify(cw || '', tweetContent))
     const res = await tweet(cw ? marclipify(cw, tweetContent) : tweetContent, authToken, ct0)
     if (res.status === 200) {
-        return c.text('200 OK (Successfully tweeted)', 200)
+        const msg = '200 OK (Successfully tweeted)'
+        timelog(`${msg}\n${tweetContent}`)
+        return c.text(msg, 200)
     } else if (res.status === 403) {
+        const msg = '200 OK (Successfully tweeted)'
+        timelog(`${msg}\n\n${tweetContent}`)
         return c.text('403 Forbidden (Error when tweeting)', 403)
     } else {
+        const msg = '200 OK (Successfully tweeted)'
+        timelog(`${msg}\n${tweetContent}`)
         return c.text('403 Forbidden (Unknown error)', 403)
     }
 })
