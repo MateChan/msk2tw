@@ -3,9 +3,9 @@ import { load } from 'https://deno.land/std@0.198.0/dotenv/mod.ts'
 import { Payload } from './types.ts'
 import { tweet } from './twitter.ts'
 
-const timelog = (text: string, content = '') => {
+const timelog = (text: string, content?: string) => {
     console.log(`${new Date().toLocaleString('ja-JP', { timeZone: 'JST' })
-        }: ${text}\n${content.replace(/^/gm, '> ')}`)
+        }: ${text}\n${content?.replace(/^/gm, '> ') ?? ''}`)
 }
 
 const env = await load()
@@ -48,12 +48,12 @@ app.post('/', async c => {
     const res = await tweet(tweetContent, authToken, ct0)
     if (res.status === 200) {
         const msg = 'successfully tweeted'
-        timelog(`${msg}\n${tweetContent.replace(/^/gm, '> ')}`)
+        timelog(msg, tweetContent)
         return c.text(msg, 200)
     }
     const msg = 'error while tweeting'
-    timelog(`${msg}\n${tweetContent.replace}`)
-    return c.text('403 Forbidden (Error when tweeting)', 403)
+    timelog(msg, tweetContent)
+    return c.text(msg, 403)
 })
 
 Deno.serve(app.fetch)
