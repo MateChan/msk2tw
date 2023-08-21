@@ -31,17 +31,20 @@ app.post('/', async c => {
         timelog(msg)
         return c.text(msg, 403)
     }
-    const filesStr: string = (files ?? []).reduce((p, c, i) => {
-        return p + `\n${(() => {
-            if (!c.type.includes('image')) {
-                return `📄 ${c.url}`
-            } else if (cw) {
-                return `\n![image ${i + 1}](${c.url})`
-            } else {
-                return `🖼 ${c.url}`
-            }
-        })()}`
+    const filesStr: string = (files ?? []).reduce((p: string, c) => {
+        return `${p}\n${c.type.includes('image') ? '🖼' : '📄'} ${c.url}`
     }, '')
+    // const filesStr: string = (files ?? []).reduce((p, c, i) => {
+    //     return p + `\n${(() => {
+    //         if (!c.type.includes('image')) {
+    //             return `📄 ${c.url}`
+    //         } else if (cw) {
+    //             return `\n![image ${i + 1}](${c.url})`
+    //         } else {
+    //             return `🖼 ${c.url}`
+    //         }
+    //     })()}`
+    // }, '')
     const tweetContent = ((text ?? '') + filesStr).replaceAll('\n', '  \n')
     if (!tweetContent) {
         const msg = '403 Forbidden (Empty content)'
