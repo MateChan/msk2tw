@@ -2,7 +2,6 @@ import { Hono } from 'https://deno.land/x/hono@v3.4.1/mod.ts'
 import { load } from 'https://deno.land/std@0.198.0/dotenv/mod.ts'
 import { Payload } from './types.ts'
 import { tweet } from './twitter.ts'
-import { marclipify } from './marclip.ts'
 
 const timelog = (text: string) => {
     console.log(`${new Date().toLocaleString('ja-JP', { timeZone: 'JST' })}: ${text}`)
@@ -34,24 +33,13 @@ app.post('/', async c => {
     const filesStr: string = (files ?? []).reduce((p: string, c) => {
         return `${p}\n${c.type.includes('image') ? '🖼' : '📄'} ${c.url}`
     }, '')
-    // const filesStr: string = (files ?? []).reduce((p, c, i) => {
-    //     return p + `\n${(() => {
-    //         if (!c.type.includes('image')) {
-    //             return `📄 ${c.url}`
-    //         } else if (cw) {
-    //             return `\n![image ${i + 1}](${c.url})`
-    //         } else {
-    //             return `🖼 ${c.url}`
-    //         }
-    //     })()}`
-    // }, '')
-    const tweetContent = ((text ?? '') + filesStr).replaceAll('\n', '  \n')
+    const tweetContent = (cw ? `${cw}...\n\n` : '') + (text ?? '') + filesStr
     if (!tweetContent) {
         const msg = '403 Forbidden (Empty content)'
         timelog(msg)
         return c.text(msg, 403)
     }
-    const res = await tweet(cw ? marclipify(cw, tweetContent) : tweetContent, authToken, ct0)
+    const res = await tweet(tweetContent, authToken, ct0)
     if (res.status === 200) {
         const msg = '200 OK (Successfully tweeted)'
         timelog(`${msg}\n${tweetContent}`)
