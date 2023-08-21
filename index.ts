@@ -3,8 +3,9 @@ import { load } from 'https://deno.land/std@0.198.0/dotenv/mod.ts'
 import { Payload } from './types.ts'
 import { tweet } from './twitter.ts'
 
-const timelog = (text: string) => {
-    console.log(`${new Date().toLocaleString('ja-JP', { timeZone: 'JST' })}: ${text}`)
+const timelog = (text: string, content = '') => {
+    console.log(`${new Date().toLocaleString('ja-JP', { timeZone: 'JST' })
+        }: ${text}\n${content.replace(/^/gm, '> ')}`)
 }
 
 const env = await load()
@@ -19,14 +20,19 @@ const app = new Hono()
 app.post('/', async c => {
     const requestSecret: string = c.req.header('X-Misskey-Hook-Secret') ?? ''
     if (requestSecret !== secret) {
-        const msg = '403 Forbidden (Incorrect Secret)'
+        const msg = 'wrong secret'
         timelog(msg)
         return c.text(msg, 403)
     }
     const payload: Payload = await c.req.json()
     const { text, cw, visibility, localOnly, files } = payload.body.note
-    if (!['public', 'home'].includes(visibility) || localOnly) {
-        const msg = `403 Forbidden (Post visibility: ${localOnly ? 'local only' : visibility})`
+    if (localOnly) {
+        const msg = `post visibility: "local only"`
+        timelog(msg)
+        return c.text(msg, 403)
+    }
+    if (visibility !== 'public' && visibility !== 'home') {
+        const msg = `post visibility: "${visibility}"`
         timelog(msg)
         return c.text(msg, 403)
     }
@@ -35,24 +41,19 @@ app.post('/', async c => {
     }, '')
     const tweetContent = (cw ? `${cw}...\n\n` : '') + (text ?? '') + filesStr
     if (!tweetContent) {
-        const msg = '403 Forbidden (Empty content)'
+        const msg = 'empty content'
         timelog(msg)
         return c.text(msg, 403)
     }
     const res = await tweet(tweetContent, authToken, ct0)
     if (res.status === 200) {
-        const msg = '200 OK (Successfully tweeted)'
-        timelog(`${msg}\n${tweetContent}`)
+        const msg = 'successfully tweeted'
+        timelog(`${msg}\n${tweetContent.replace(/^/gm, '> ')}`)
         return c.text(msg, 200)
-    } else if (res.status === 403) {
-        const msg = '200 OK (Successfully tweeted)'
-        timelog(`${msg}\n\n${tweetContent}`)
-        return c.text('403 Forbidden (Error when tweeting)', 403)
-    } else {
-        const msg = '200 OK (Successfully tweeted)'
-        timelog(`${msg}\n${tweetContent}`)
-        return c.text('403 Forbidden (Unknown error)', 403)
     }
+    const msg = 'error while tweeting'
+    timelog(`${msg}\n${tweetContent.replace}`)
+    return c.text('403 Forbidden (Error when tweeting)', 403)
 })
 
 Deno.serve(app.fetch)
