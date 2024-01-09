@@ -40,7 +40,8 @@ app.post("/", async (c) => {
     return c.text(msg, 403);
   }
   const uploadableFiles = (files ?? []).filter((f) =>
-    f.type.includes("image") || f.type === "video/mp4"
+    f.type === "image/jpeg" || f.type === "image/png" ||
+    f.type === "image/webp" || f.type === "image/gif" || f.type === "video/mp4"
   );
   const [uploadFiles, unuploadFiles] = [
     uploadableFiles.slice(0, 4),

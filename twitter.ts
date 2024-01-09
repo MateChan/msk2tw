@@ -75,13 +75,14 @@ export const uploadMediaFromURL = async (
   const mediaType = match(type, {
     "image/jpeg": () => "tweet_image",
     "image/png": () => "tweet_image",
+    "image/webp": () => "tweet_image",
     "image/gif": () => "tweet_gif",
     "video/mp4": () => "tweet_video",
 
     [match._]: () => {
       throw new Error(`Unsupported media type: ${type}`);
-    }
-  })
+    },
+  });
 
   const initURL =
     `https://upload.twitter.com/i/media/upload.json?command=INIT&total_bytes=${blob.size}&media_type=${
@@ -99,7 +100,6 @@ export const uploadMediaFromURL = async (
     },
   });
   if (!uploadInitRes.ok) {
-    console.log(uploadInitRes);
     throw new Error("Failed to initialize upload");
   }
   const mediaInfo: { media_id_string: string } = await uploadInitRes.json();
@@ -127,7 +127,6 @@ export const uploadMediaFromURL = async (
       },
     });
     if (!uploadAppendRes.ok) {
-      console.log(uploadAppendRes);
       throw new Error(`Failed to upload chunk ${index}`);
     }
   }));
