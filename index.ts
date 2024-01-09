@@ -39,14 +39,28 @@ app.post("/", async (c) => {
     timelog(msg);
     return c.text(msg, 403);
   }
-  const uploadableFiles = (files ?? []).filter((f) =>
+  const uploadableImages = (files ?? []).filter((f) =>
     f.type === "image/jpeg" || f.type === "image/png" ||
-    f.type === "image/webp" || f.type === "image/gif" || f.type === "video/mp4"
+    f.type === "image/webp"
   );
-  const [uploadFiles, unuploadFiles] = [
-    uploadableFiles.slice(0, 4),
-    uploadableFiles.slice(4),
-  ];
+  const uploadableVideos = (files ?? []).filter((f) =>
+    f.type === "image/gif" || f.type === "video/mp4"
+  );
+  const [uploadFiles, unuploadFiles] = uploadableVideos.length > 0
+    ? [
+      uploadableImages.slice(0, 1),
+      [
+        ...uploadableImages,
+        ...uploadableVideos.slice(1),
+      ],
+    ]
+    : [
+      uploadableImages.slice(0, 4),
+      [
+        ...uploadableImages.slice(4),
+        ...uploadableVideos,
+      ],
+    ];
   const mediaIds = await Promise.all(
     uploadFiles.map(async (file) =>
       await uploadMediaFromURL(file.url, file.type, authToken, ct0)
