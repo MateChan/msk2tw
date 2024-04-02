@@ -1,4 +1,4 @@
-import { Hono } from "https://deno.land/x/hono@v3.4.1/mod.ts";
+import { Hono } from "hono/mod.ts";
 import { Payload } from "./types.ts";
 import { tweet, uploadMediaFromURL } from "./twitter.ts";
 

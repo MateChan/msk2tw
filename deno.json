@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "hono/": "https://deno.land/x/hono@v4.2.0/"
+  }
+}
