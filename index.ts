@@ -1,5 +1,4 @@
 import { Hono } from "https://deno.land/x/hono@v3.4.1/mod.ts";
-import { load } from "https://deno.land/std@0.198.0/dotenv/mod.ts";
 import { Payload } from "./types.ts";
 import { tweet, uploadMediaFromURL } from "./twitter.ts";
 
@@ -11,12 +10,11 @@ const timelog = (text: string, content?: string) => {
   );
 };
 
-const env = await load();
 const [secret, authToken, ct0] = [
   "MISSKEY_WEBHOOK_SECRET",
   "TWITTER_AUTH_TOKEN",
   "TWITTER_CT0",
-].map((key) => Deno.env.get(key) ?? env[key] ?? "");
+].map((key) => Deno.env.get(key) ?? "");
 
 const app = new Hono();
 
